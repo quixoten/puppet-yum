@@ -25,106 +25,126 @@ class yum::repo::epel (
     )
   }
 
-  $osver = $::operatingsystem ? {
-    'Amazon'    => [ '6' ],
-    'XenServer' => [ '5' ],
-    default     => split($::operatingsystemrelease, '[.]')
+  case $facts['os']['name'] {
+    'Amazon': {
+      $osver = '6'
+    }
+
+    'XenServer': {
+      case $facts['os']['release']['major'] {
+        '5', '6': {
+          $osver = '5'
+        }
+
+        '7': {
+          $osver = '7'
+        }
+
+        default: {
+          fail("Do not know how to map XenServer ${facts['os']['release']['major']}")
+        }
+      }
+    }
+
+    default: {
+      $osver = $facts['os']['release']['major']
+    }
   }
 
   $baseurl_epel = $mirror_url ? {
     undef   => undef,
-    default => "${mirror_url}/${osver[0]}/\$basearch/",
+    default => "${mirror_url}/${osver}/\$basearch/",
   }
 
   $baseurl_epel_debuginfo = $mirror_url ? {
     undef   => undef,
-    default => "${mirror_url}/${osver[0]}/\$basearch/debug",
+    default => "${mirror_url}/${osver}/\$basearch/debug",
   }
 
   $baseurl_epel_source = $mirror_url ? {
     undef   => undef,
-    default => "${mirror_url}/${osver[0]}/SRPMS/",
+    default => "${mirror_url}/${osver}/SRPMS/",
   }
 
   $baseurl_epel_testing = $mirror_url ? {
     undef   => undef,
-    default => "${mirror_url}/testing/${osver[0]}/\$basearch/",
+    default => "${mirror_url}/testing/${osver}/\$basearch/",
   }
 
   $baseurl_epel_testing_debuginfo = $mirror_url ? {
     undef   => undef,
-    default => "${mirror_url}/testing/${osver[0]}/\$basearch/debug",
+    default => "${mirror_url}/testing/${osver}/\$basearch/debug",
   }
 
   $baseurl_epel_testing_source = $mirror_url ? {
     undef   => undef,
-    default => "${mirror_url}/testing/${osver[0]}/SRPMS/",
+    default => "${mirror_url}/testing/${osver}/SRPMS/",
   }
 
   yum::managed_yumrepo { 'epel':
-    descr          => "Extra Packages for Enterprise Linux ${osver[0]} - \$basearch",
+    descr          => "Extra Packages for Enterprise Linux ${osver} - \$basearch",
     baseurl        => $baseurl_epel,
-    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-${osver[0]}&arch=\$basearch",
+    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-${osver}&arch=\$basearch",
     enabled        => 1,
     gpgcheck       => 1,
     failovermethod => 'priority',
-    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver[0]}",
-    gpgkey_source  => "puppet:///modules/yum/rpm-gpg/RPM-GPG-KEY-EPEL-${osver[0]}",
+    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver}",
+    gpgkey_source  => "puppet:///modules/yum/rpm-gpg/RPM-GPG-KEY-EPEL-${osver}",
     priority       => 16,
   }
 
   yum::managed_yumrepo { 'epel-debuginfo':
-    descr          => "Extra Packages for Enterprise Linux ${osver[0]} - \$basearch - Debug",
+    descr          => "Extra Packages for Enterprise Linux ${osver} - \$basearch - Debug",
     baseurl        => $baseurl_epel_debuginfo,
-    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-${osver[0]}&arch=\$basearch",
+    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-${osver}&arch=\$basearch",
     enabled        => 0,
     gpgcheck       => 1,
     failovermethod => 'priority',
-    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver[0]}",
+    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver}",
     priority       => 16,
   }
 
   yum::managed_yumrepo { 'epel-source':
-    descr          => "Extra Packages for Enterprise Linux ${osver[0]} - \$basearch - Source",
+    descr          => "Extra Packages for Enterprise Linux ${osver} - \$basearch - Source",
     baseurl        => $baseurl_epel_source,
-    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-source-${osver[0]}&arch=\$basearch",
+    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-source-${osver}&arch=\$basearch",
     enabled        => 0,
     gpgcheck       => 1,
     failovermethod => 'priority',
-    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver[0]}",
+    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver}",
     priority       => 16,
   }
 
   yum::managed_yumrepo { 'epel-testing':
-    descr          => "Extra Packages for Enterprise Linux ${osver[0]} - Testing - \$basearch",
+    descr          => "Extra Packages for Enterprise Linux ${osver} - Testing - \$basearch",
     baseurl        => $baseurl_epel_testing,
-    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=testing-epel${osver[0]}&arch=\$basearch",
+    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=testing-epel${osver}&arch=\$basearch",
     enabled        => 0,
     gpgcheck       => 1,
     failovermethod => 'priority',
-    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver[0]}",
+    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver}",
     priority       => 17,
   }
 
   yum::managed_yumrepo { 'epel-testing-debuginfo':
-    descr          => "Extra Packages for Enterprise Linux ${osver[0]} - Testing - \$basearch - Debug",
+    descr          => "Extra Packages for Enterprise Linux ${osver} - Testing - \$basearch - Debug",
     baseurl        => $baseurl_epel_testing_debuginfo,
-    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=testing-debug-epel${osver[0]}&arch=\$basearch",
+    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=testing-debug-epel${osver}&arch=\$basearch",
     enabled        => 0,
     gpgcheck       => 1,
     failovermethod => 'priority',
-    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver[0]}",
+    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver}",
     priority       => 17,
   }
 
   yum::managed_yumrepo { 'epel-testing-source':
-    descr          => "Extra Packages for Enterprise Linux ${osver[0]} - Testing - \$basearch - Source",
+    descr          => "Extra Packages for Enterprise Linux ${osver} - Testing - \$basearch - Source",
     baseurl        => $baseurl_epel_testing_source,
-    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=testing-source-epel${osver[0]}&arch=\$basearch",
+    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=testing-source-epel${osver}&arch=\$basearch",
     enabled        => 0,
     gpgcheck       => 1,
     failovermethod => 'priority',
-    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver[0]}",
+    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-${osver}",
     priority       => 17,
   }
 
